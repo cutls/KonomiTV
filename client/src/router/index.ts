@@ -134,6 +134,11 @@ const router = createRouter({
             component: () => import('@/views/Register.vue'),
         },
         {
+            path: '/timetable/',
+            name: 'Timetable',
+            component: () => import('@/views/Timetable/Home.vue'),
+        },
+        {
             path: '/reservations/',
             name: 'Reservations',
             component: () => import('@/views/Reservations/Home.vue'),
