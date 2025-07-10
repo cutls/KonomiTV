@@ -6,7 +6,15 @@
             <div class="timetable-home-container-wrapper">
                 <SPHeaderBar />
                 <div class="timetable-home-container">
+                    <div v-if="is_loading" class="timetable__loading">
+                        <v-progress-circular
+                            indeterminate
+                            color="primary"
+                            size="50"
+                        ></v-progress-circular>
+                    </div>
                     <div
+                        v-if="!is_loading"
                         style="
                             display: flex;
                             align-items: center;
@@ -64,7 +72,6 @@
                             </v-btn>
                         </div>
                     </div>
-
                     <div class="timetable__box" id="timetable">
                         <div
                             class="timetable__line"
@@ -124,7 +131,8 @@ const fetchTimetable = async (type: ChannelType, day: number) => {
     const minute = isToday ? dayjs().minute() : 0;
     const result = await Timetable.fetchTimetable(type, day, hour, minute);
     if (result) timetables.value = result;
-    const scrollTo = ((dayjs().hour() * 60 + dayjs().minute()) / 1440) * 3600;
+    const scrollTo =
+        ((dayjs().hour() * 60 + dayjs().minute()) / 25 / 60) * 3600 + 34;
     nowTop.value = isToday ? `${scrollTo}px` : "-1px";
     return result ? result : [];
 };
@@ -149,7 +157,9 @@ onMounted(() => {
             if (timetable) {
                 timetables.value = timetable;
                 const scrollTo =
-                    ((dayjs().hour() * 60 + dayjs().minute()) / 1440) * 3600;
+                    ((dayjs().hour() * 60 + dayjs().minute()) / 25 / 60) *
+                        3600 +
+                    34;
                 nowTop.value = `${scrollTo}px`;
                 document.getElementById("timetable")?.scrollTo({
                     left: 0,
@@ -169,7 +179,10 @@ onMounted(() => {
     flex-direction: column;
     width: 100%;
     min-width: 0; // very important!!! これがないと要素がはみ出す
-    height: calc(100vh - 65px);
+    height: 100vh;
+    @include smartphone-vertical {
+       height: calc(100vh - 65px);
+    }
 }
 
 .timetable-home-container {
@@ -213,6 +226,12 @@ onMounted(() => {
     }
 }
 .timetable {
+    &__loading {
+        position: fixed;
+        top: calc(50% - 25px);
+        left: calc(50% - 25px);
+        z-index: 10;
+    }
     &__box {
         display: flex;
         overflow-x: scroll;
