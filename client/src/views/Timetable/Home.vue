@@ -11,6 +11,7 @@
                             display: flex;
                             align-items: center;
                             margin-bottom: 10px;
+                            flex-wrap: wrap;
                         "
                     >
                         <Breadcrumbs
@@ -24,46 +25,53 @@
                             ]"
                         />
                         <div style="width: 10px"></div>
-                        <v-btn
-                            variant="flat"
-                            @click="updateTargetType('GR')"
-                            :color="target_type === 'GR' ? 'primary' : ''"
-                        >
-                            地デジ
-                        </v-btn>
-                        <v-btn
-                            variant="flat"
-                            @click="updateTargetType('BS')"
-                            :color="target_type === 'BS' ? 'primary' : ''"
-                        >
-                            BS
-                        </v-btn>
-                        <v-btn
-                            variant="flat"
-                            @click="updateTargetType('CS')"
-                            :color="target_type === 'CS' ? 'primary' : ''"
-                        >
-                            CS
-                        </v-btn>
+                        <div>
+                            <v-btn
+                                variant="flat"
+                                @click="updateTargetType('GR')"
+                                :color="target_type === 'GR' ? 'primary' : ''"
+                            >
+                                地デジ
+                            </v-btn>
+                            <v-btn
+                                variant="flat"
+                                @click="updateTargetType('BS')"
+                                :color="target_type === 'BS' ? 'primary' : ''"
+                            >
+                                BS
+                            </v-btn>
+                            <v-btn
+                                variant="flat"
+                                @click="updateTargetType('CS')"
+                                :color="target_type === 'CS' ? 'primary' : ''"
+                            >
+                                CS
+                            </v-btn>
+                        </div>
                         <div style="width: 10px"></div>
-                        <v-btn
-                            v-for="(_, i) in dayOfWeek"
-                            variant="flat"
-                            @click="updateDay(dayjs().add(i, 'day').day())"
-                            :color="
-                                day === dayjs().add(i, 'day').day()
-                                    ? 'primary'
-                                    : ''
-                            "
-                        >
-                            {{ dayOfWeek[dayjs().add(i, "day").day()] }}
-                        </v-btn>
+                        <div>
+                            <v-btn
+                                v-for="(_, i) in dayOfWeek"
+                                variant="flat"
+                                @click="updateDay(dayjs().add(i, 'day').day())"
+                                :color="
+                                    day === dayjs().add(i, 'day').day()
+                                        ? 'primary'
+                                        : ''
+                                "
+                            >
+                                {{ dayOfWeek[dayjs().add(i, "day").day()] }}
+                            </v-btn>
+                        </div>
                     </div>
 
                     <div class="timetable__box" id="timetable">
                         <div
                             class="timetable__line"
-                            :style="{ top: nowTop }"
+                            :style="{
+                                top: nowTop,
+                                width: `${timetables.length * 150}px`,
+                            }"
                             v-show="nowTop !== '-1px'"
                         ></div>
                         <div class="timetable__time-bar">
@@ -117,7 +125,7 @@ const fetchTimetable = async (type: ChannelType, day: number) => {
     const result = await Timetable.fetchTimetable(type, day, hour, minute);
     if (result) timetables.value = result;
     const scrollTo = ((dayjs().hour() * 60 + dayjs().minute()) / 1440) * 3600;
-    nowTop.value = isToday ? `${scrollTo}px` : '-1px';
+    nowTop.value = isToday ? `${scrollTo}px` : "-1px";
     return result ? result : [];
 };
 const updateTargetType = (type: ChannelType) => {
@@ -145,7 +153,7 @@ onMounted(() => {
                 nowTop.value = `${scrollTo}px`;
                 document.getElementById("timetable")?.scrollTo({
                     left: 0,
-                    top: scrollTo,
+                    top: scrollTo - 100,
                 });
             }
         })
@@ -230,8 +238,7 @@ onMounted(() => {
     }
     &__line {
         position: absolute;
-        left: 0;
-        width: 100%;
+        left: 45px;
         border-top: 3px solid rgb(var(--v-theme-primary));
     }
 }

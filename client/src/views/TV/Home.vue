@@ -109,12 +109,12 @@
                 </div>
             </div>
         </main>
-        <div v-ripple class="floating-button" @click="Message.warning('番組表は現在開発中です。')">
+        <router-link to="/timetable" v-ripple class="floating-button">
             <div class="floating-button__content">
                 <Icon class="floating-button__icon" icon="fluent:calendar-20-regular" width="26px" />
                 <div class="floating-button__text">番組表</div>
             </div>
-        </div>
+        </router-link>
     </div>
 </template>
 <script lang="ts">
