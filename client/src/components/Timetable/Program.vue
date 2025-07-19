@@ -5,6 +5,7 @@
                 v-for="program in programs"
                 class="timetable__program"
                 v-bind:key="program.id"
+                @click="selectProgram(program)"
                 :style="
                     getCss(
                         program.width_on_timetable,
@@ -33,7 +34,10 @@
 import { ITimetableProgram } from '@/services/Timetable';
 import { ProgramUtils } from '@/utils';
 import { dayjs } from '@/utils';
+import { inject, Ref } from 'vue';
 
+const injected = inject<{ selectedProgram: Ref<null | ITimetableProgram>; updateSelectedProgram: (program: ITimetableProgram | null) => void }>('selectedProgram')
+const selectProgram = (program:  ITimetableProgram) => injected?.updateSelectedProgram(program)
 // Props の定義
 const props = defineProps<{
     programs: ITimetableProgram[];
@@ -50,7 +54,7 @@ const getCss = (width: number, start: string, end: string) => {
     const endGridTemp = endHour * 12 + Math.floor(endMinute / 5);
     const endGrid = endGridTemp >= startGrid ? endGridTemp : endGridTemp + 288;
     const gridCss = `grid-area:${startGrid + 1} / 1 / ${endGrid + 1} / 1;`;
-    return `width: ${150 * width}px;${gridCss}`;
+    return `width: ${150 * width}px;${gridCss};cursor: pointer;`;
 };
 </script>
 

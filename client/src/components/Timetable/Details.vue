@@ -1,102 +1,88 @@
 <template>
-    <div class="program-container">
-        <section class="program-broadcaster">
-            <img class="program-broadcaster__icon" :src="`${Utils.api_base_url}/channels/${channel.id}/logo`">
-            <div class="program-broadcaster__number">Ch: {{channelsStore.channel.current.channel_number}}</div>
-            <div class="program-broadcaster__name">{{channelsStore.channel.current.name}}</div>
-        </section>
-        <section class="program-info">
-            <h1 class="program-info__title"
-                v-html="ProgramUtils.decorateProgramInfo(channelsStore.channel.current.program_present, 'title')">
-            </h1>
-            <div class="program-info__time">
-                {{ProgramUtils.getProgramTime(channelsStore.channel.current.program_present)}}
-            </div>
-            <div class="program-info__description"
-                v-html="ProgramUtils.decorateProgramInfo(channelsStore.channel.current.program_present, 'description')">
-            </div>
-            <div class="program-info__genre-container">
-                <div class="program-info__genre" :key="genre_index"
-                    v-for="(genre, genre_index) in channelsStore.channel.current.program_present?.genres ?? []">
-                    {{genre.major}} / {{genre.middle}}
+    <v-dialog
+        max-width="770"
+        transition="slide-y-transition"
+        :model-value="show"
+        @update:model-value="$emit('update:show', $event)"
+    >
+        <v-card class="program-container" v-if="channel">
+            <section class="program-broadcaster">
+                <img
+                    class="program-broadcaster__icon"
+                    :src="`${Utils.api_base_url}/channels/${channel.id}/logo`"
+                />
+                <div class="program-broadcaster__number">
+                    Ch: {{ channel.channel_number }}
                 </div>
-            </div>
-            <div class="program-info__next">
-                <span class="program-info__next-decorate">NEXT</span>
-                <Icon class="program-info__next-icon" icon="fluent:fast-forward-20-filled" width="16px" />
-            </div>
-            <span class="program-info__next-title"
-                v-html="ProgramUtils.decorateProgramInfo(channelsStore.channel.current.program_following, 'title')">
-            </span>
-            <div class="program-info__next-time">
-                {{ProgramUtils.getProgramTime(channelsStore.channel.current.program_following)}}
-            </div>
-            <div class="program-info__status">
-                <div class="program-info__status-force"
-                    :class="`program-info__status-force--${ChannelUtils.getChannelForceType(channelsStore.channel.current.jikkyo_force)}`">
-                    <Icon icon="fa-solid:fire-alt" height="14px" />
-                    <span class="ml-2">勢い:</span>
-                    <span class="ml-2">{{channelsStore.channel.current.jikkyo_force ?? '--'}} コメ/分</span>
+                <div class="program-broadcaster__name">
+                    {{ channel.name }}
                 </div>
-                <div class="program-info__status-viewers ml-5">
-                    <Icon icon="fa-solid:eye" height="14px" />
-                    <span class="ml-2">視聴数:</span>
-                    <span class="ml-1">{{channelsStore.channel.current.viewer_count}}</span>
+            </section>
+            <section class="program-info">
+                <h1
+                    class="program-info__title"
+                    v-html="ProgramUtils.decorateProgramInfo(program, 'title')"
+                ></h1>
+                <div class="program-info__time">
+                    {{ ProgramUtils.getProgramTime(program) }}
                 </div>
-            </div>
-        </section>
-        <section class="program-detail-container">
-            <div class="program-detail" :key="detail_heading"
-                v-for="(detail_text, detail_heading) in channelsStore.channel.current.program_present?.detail ?? {}">
-                <h2 class="program-detail__heading">{{detail_heading}}</h2>
-                <div class="program-detail__text" v-html="Utils.URLtoLink(detail_text)"></div>
-            </div>
-        </section>
-    </div>
+                <div
+                    class="program-info__description"
+                    v-html="ProgramUtils.decorateProgramInfo(program, 'description')"
+                ></div>
+                <div class="program-info__genre-container">
+                    <div
+                        class="program-info__genre"
+                        :key="genre_index"
+                        v-for="(genre, genre_index) in program?.genres ?? []"
+                    >
+                        {{ genre.major }} / {{ genre.middle }}
+                    </div>
+                </div>
+            </section>
+            <section class="program-detail-container">
+                <div
+                    class="program-detail"
+                    :key="detail_heading"
+                    v-for="(detail_text, detail_heading) in program?.detail ?? {}"
+                >
+                    <h2 class="program-detail__heading">
+                        {{ detail_heading }}
+                    </h2>
+                    <div
+                        class="program-detail__text"
+                        v-html="Utils.URLtoLink(detail_text)"
+                    ></div>
+                </div>
+            </section>
+        </v-card>
+    </v-dialog>
 </template>
-<script lang="ts">
+<script lang="ts" setup>
 
-import { mapStores } from 'pinia';
-import { defineComponent } from 'vue';
+import { IChannel } from "@/services/Channels";
+import { ITimetableProgram } from "@/services/Timetable";
+import useChannelsStore from "@/stores/ChannelsStore";
+import Utils, { ChannelUtils, ProgramUtils } from "@/utils";
 
-import { IChannel } from '@/services/Channels';
-import { ITimetableProgram } from '@/services/Timetable';
-import useChannelsStore from '@/stores/ChannelsStore';
-import Utils, { ChannelUtils, ProgramUtils } from '@/utils';
-const props = defineProps<{
-    channel: IChannel;
-    program: ITimetableProgram;
+const channelsStore = useChannelsStore();
+// Emits
+defineEmits<{
+    (e: "update:show", value: boolean): void;
 }>();
-export default defineComponent({
-    name: 'Panel-ProgramTab',
-    data() {
-        return {
-            // ユーティリティをテンプレートで使えるように
-            Utils: Object.freeze(Utils),
-            ChannelUtils: Object.freeze(ChannelUtils),
-            ProgramUtils: Object.freeze(ProgramUtils),
-            ...props
-        };
-    },
-    computed: {
-        ...mapStores(useChannelsStore),
-    }
-});
-
+defineProps<{
+    channel: IChannel | null;
+    program: ITimetableProgram | null;
+    show: boolean;
+}>();
 </script>
 <style lang="scss" scoped>
-
 .program-container {
-    padding-left: 16px;
-    padding-right: 16px;
+    padding: 16px;
     overflow-y: auto;
-    @include tablet-vertical {
-        padding-left: 24px;
-        padding-right: 24px;
-    }
 
     .program-broadcaster {
-        display: none;
+        display: flex;
         align-items: center;
         min-width: 0;
         @include tablet-vertical {
@@ -118,7 +104,11 @@ export default defineComponent({
             width: 43px;
             height: 24px;
             border-radius: 3px;
-            background: linear-gradient(150deg, rgb(var(--v-theme-gray)), rgb(var(--v-theme-background-lighten-2)));
+            background: linear-gradient(
+                150deg,
+                rgb(var(--v-theme-gray)),
+                rgb(var(--v-theme-background-lighten-2))
+            );
             object-fit: cover;
             user-select: none;
             @include tablet-vertical {
@@ -166,8 +156,8 @@ export default defineComponent({
             font-size: 22px;
             font-weight: bold;
             line-height: 145%;
-            font-feature-settings: "palt" 1;  // 文字詰め
-            letter-spacing: 0.05em;  // 字間を少し空ける
+            font-feature-settings: "palt" 1; // 文字詰め
+            letter-spacing: 0.05em; // 字間を少し空ける
             @include tablet-vertical {
                 margin-top: 16px;
             }
@@ -194,8 +184,8 @@ export default defineComponent({
             font-size: 12px;
             line-height: 168%;
             overflow-wrap: break-word;
-            font-feature-settings: "palt" 1;  // 文字詰め
-            letter-spacing: 0.08em;  // 字間を少し空ける
+            font-feature-settings: "palt" 1; // 文字詰め
+            letter-spacing: 0.08em; // 字間を少し空ける
             @include smartphone-horizontal {
                 margin-top: 8px;
                 font-size: 11px;
@@ -247,7 +237,7 @@ export default defineComponent({
             font-size: 14px;
             font-weight: bold;
             overflow: hidden;
-            -webkit-line-clamp: 2;  // 2行までに制限
+            -webkit-line-clamp: 2; // 2行までに制限
             -webkit-box-orient: vertical;
             @include smartphone-horizontal {
                 font-size: 13px;
@@ -270,19 +260,20 @@ export default defineComponent({
                 font-size: 12px;
             }
 
-            &-force, &-viewers {
+            &-force,
+            &-viewers {
                 display: flex;
                 align-items: center;
             }
 
             &-force--festival {
-                color: #E7556E;
+                color: #e7556e;
             }
             &-force--so-many {
-                color: #E76B55;
+                color: #e76b55;
             }
             &-force--many {
-                color: #E7A355;
+                color: #e7a355;
             }
         }
     }
@@ -314,22 +305,22 @@ export default defineComponent({
                 font-size: 12px;
                 line-height: 168%;
                 overflow-wrap: break-word;
-                white-space: pre-wrap;  // \n で改行する
-                font-feature-settings: "palt" 1;  // 文字詰め
-                letter-spacing: 0.08em;  // 字間を少し空ける
+                white-space: pre-wrap; // \n で改行する
+                font-feature-settings: "palt" 1; // 文字詰め
+                letter-spacing: 0.08em; // 字間を少し空ける
                 @include smartphone-horizontal {
                     font-size: 11px;
                 }
 
                 // リンクの色
-                :deep(a:link), :deep(a:visited) {
+                :deep(a:link),
+                :deep(a:visited) {
                     color: rgb(var(--v-theme-primary-lighten-1));
                     text-decoration: underline;
-                    text-underline-offset: 3px;  // 下線と字の間隔を空ける
+                    text-underline-offset: 3px; // 下線と字の間隔を空ける
                 }
             }
         }
     }
 }
-
 </style>

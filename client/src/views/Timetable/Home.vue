@@ -108,23 +108,46 @@
             </div>
         </main>
     </div>
+
+    <Details :program="selectedProgram" :channel="selectedChannel" v-model:show="programDialog" />
 </template>
 
 <script lang="ts" setup>
-import { onMounted, computed, ref } from "vue";
+import { onMounted, provide, Ref, ref } from "vue";
 import { mapStores, storeToRefs } from "pinia";
 
 import Breadcrumbs from "@/components/Breadcrumbs.vue";
 import HeaderBar from "@/components/HeaderBar.vue";
 import Navigation from "@/components/Navigation.vue";
 import SPHeaderBar from "@/components/SPHeaderBar.vue";
-import Timetable, { ITimetableData } from "@/services/Timetable";
-import { ChannelType } from "@/services/Channels";
+import Timetable, {
+    ITimetableData,
+    ITimetableProgram,
+} from "@/services/Timetable";
+import { ChannelType, ILiveChannel } from "@/services/Channels";
 import useChannelsStore from "@/stores/ChannelsStore";
 import Channel from "@/components/Timetable/Channel.vue";
 import Program from "@/components/Timetable/Program.vue";
 import dayjs from "dayjs";
+import Details from "@/components/Timetable/Details.vue";
+import { channel } from "diagnostics_channel";
 
+const selectedProgram = ref<null | ITimetableProgram>(null);
+const selectedChannel = ref<null | ILiveChannel>(null);
+const programDialog = ref(false);
+provide<{
+    selectedProgram: Ref<null | ITimetableProgram>;
+    updateSelectedProgram: (program: ITimetableProgram | null) => void;
+}>("selectedProgram", {
+    selectedProgram,
+    updateSelectedProgram: (program: ITimetableProgram | null) => {
+        programDialog.value = !!program;
+        selectedProgram.value = program;
+        selectedChannel.value = channelsStore.channels_list[target_type.value].find(
+            (c) => c.id === program?.channel_id
+        ) || null;
+    },
+});
 const timetables = ref<ITimetableData[]>([]);
 const channelsStore = useChannelsStore();
 const is_loading = ref(true);
@@ -207,7 +230,6 @@ onMounted(async () => {
     padding: 20px;
     margin: 0 auto;
     min-width: 0;
-    max-width: 1000px;
 
     @include smartphone-horizontal {
         padding: 16px 20px !important;
@@ -264,7 +286,7 @@ onMounted(async () => {
         background: rgb(var(--v-theme-background-lighten-2));
         text-align: center;
         height: 3600px;
-        z-index: 2
+        z-index: 2;
     }
 
     &__time-label {
