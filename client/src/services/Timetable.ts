@@ -1,9 +1,11 @@
-import APIClient from '@/services/APIClient';
+import APIClient from "@/services/APIClient";
 import Channels, {
     ChannelType,
     ILiveChannel,
-} from '@/services/Channels';
-import { IProgram } from '@/services/Programs';
+    ILiveChannelsList,
+} from "@/services/Channels";
+import { IProgram } from "@/services/Programs";
+import { dayjs } from "@/utils";
 
 interface IDateRange {
     start_day_of_week: number;
@@ -55,20 +57,24 @@ class Timetable {
      * @returns 番組のリスト、取得失敗時は null
      */
     static async fetchTimetable(
+        channels: ILiveChannelsList,
         type: ChannelType,
         day: number,
         hour?: number,
-        minute?: number
+        minute?: number,
+        isToday?: boolean
     ): Promise<ITimetableData[] | null> {
-        const date_range_init: IDateRange[] = Array.from({ length: 7 }, (_, i) => ({
-            start_day_of_week: (day + i) % 7,
-            start_hour: 0,
-            start_minute: 0,
-            end_day_of_week: (day + i) % 7,
-            end_hour: 23,
-            end_minute: 59,
-        }));
-        const isToday = !!(hour && minute);
+        const date_range_init: IDateRange[] = Array.from(
+            { length: 7 },
+            (_, i) => ({
+                start_day_of_week: (day + i) % 7,
+                start_hour: 0,
+                start_minute: 0,
+                end_day_of_week: (day + i) % 7,
+                end_hour: 23,
+                end_minute: 59,
+            })
+        );
         const date_ranges_filtered = date_range_init.filter(
             (d, i) => d.start_day_of_week !== day
         );
@@ -81,9 +87,8 @@ class Timetable {
             end_minute: minute || 59,
         };
         const date_ranges = isToday
-            ? [ ...date_ranges_filtered, today_range ]
+            ? [...date_ranges_filtered, today_range]
             : date_ranges_filtered;
-        const channels = await Channels.fetchAllChannels();
         if (!channels) return null;
         const service_ranges = (channels ? channels[type] : []).map((c) => ({
             network_id: c.network_id,
@@ -97,18 +102,18 @@ class Timetable {
             is_exclude_date_ranges: true,
         };
         const response = await APIClient.post<{ programs: IProgram[] }>(
-            '/programs/search',
+            "/programs/search",
             query
         );
 
-        if (response.type === 'error') {
+        if (response.type === "error") {
             APIClient.showGenericError(
                 response,
-                '番組一覧を取得できませんでした。'
+                "番組一覧を取得できませんでした。"
             );
             return null;
         }
-        const programs = response.data.programs;
+        const programs = isToday ? response.data.programs.filter((p) => dayjs(p.start_time).date() === dayjs().date()) : response.data.programs;
 
         return channels[type].map((channel, ch_index) => ({
             channel,
@@ -149,7 +154,7 @@ class Timetable {
                     }
                     return {
                         ...program,
-                        width_on_timetable: width,
+                        width_on_timetable: width
                     };
                 }),
         }));

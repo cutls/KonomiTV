@@ -19,12 +19,10 @@
                     </div>
                 </div>
                 <div class="timetable__program__data">
-                    <p class="timetable__program__title">{{ program.title }}</p>
-                    <p class="timetable__program__description">
-                        {{ program.description || "--" }}
-                    </p>
+                    <p class="timetable__program__title" v-html="ProgramUtils.decorateProgramInfo(program, 'title')" />
+                    <p class="timetable__program__description" v-html="ProgramUtils.decorateProgramInfo(program, 'description')" /> 
                     <p class="timetable__program__description"  v-for="key in Object.keys(program.detail)"  v-bind:key="key">
-                        <span  class="timetable__program__detail-title">{{ key }}</span>{{ program.detail[key] }}
+                        <span class="timetable__program__detail-title">{{ key }}</span>{{ program.detail[key] }}
                     </p>
                 </div>
             </div>
@@ -33,6 +31,7 @@
 </template>
 <script lang="ts" setup>
 import { ITimetableProgram } from '@/services/Timetable';
+import { ProgramUtils } from '@/utils';
 import { dayjs } from '@/utils';
 
 // Props の定義
@@ -49,7 +48,7 @@ const getCss = (width: number, start: string, end: string) => {
     // 1時間を12分割して、5分単位で計算
     const startGrid = startHour * 12 + Math.floor(startMinute / 5);
     const endGridTemp = endHour * 12 + Math.floor(endMinute / 5);
-    const endGrid = endGridTemp > startGrid ? endGridTemp : endGridTemp + 288;
+    const endGrid = endGridTemp >= startGrid ? endGridTemp : endGridTemp + 288;
     const gridCss = `grid-area:${startGrid + 1} / 1 / ${endGrid + 1} / 1;`;
     return `width: ${150 * width}px;${gridCss}`;
 };

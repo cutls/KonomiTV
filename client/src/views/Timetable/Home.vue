@@ -83,7 +83,11 @@
                             v-show="nowTop !== '-1px'"
                         ></div>
                         <div class="timetable__time-bar">
-                            <div v-for="h in 25" class="timetable__time-label" v-bind:key="h">
+                            <div
+                                v-for="h in 25"
+                                class="timetable__time-label"
+                                v-bind:key="h"
+                            >
                                 {{ h - 1 }}
                             </div>
                         </div>
@@ -107,8 +111,8 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref } from "vue";
-import { mapStores } from "pinia";
+import { onMounted, computed, ref } from "vue";
+import { mapStores, storeToRefs } from "pinia";
 
 import Breadcrumbs from "@/components/Breadcrumbs.vue";
 import HeaderBar from "@/components/HeaderBar.vue";
@@ -122,18 +126,26 @@ import Program from "@/components/Timetable/Program.vue";
 import dayjs from "dayjs";
 
 const timetables = ref<ITimetableData[]>([]);
-
+const channelsStore = useChannelsStore();
 const is_loading = ref(true);
 const nowTop = ref("0px");
 const target_type = ref<ChannelType>("GR");
 const day = ref(dayjs().day()); // 0: 日曜日, 1: 月曜日, ..., 6: 土曜日
 const dayOfWeek = ["日", "月", "火", "水", "木", "金", "土"];
+const { channels_list } = storeToRefs(channelsStore);
 
 const fetchTimetable = async (type: ChannelType, day: number) => {
     const isToday = day === dayjs().day();
     const hour = isToday ? dayjs().hour() : 0;
     const minute = isToday ? dayjs().minute() : 0;
-    const result = await Timetable.fetchTimetable(type, day, hour, minute);
+    const result = await Timetable.fetchTimetable(
+        channels_list.value,
+        type,
+        day,
+        hour,
+        minute,
+        isToday
+    );
     if (result) timetables.value = result;
     const scrollTo =
         ((dayjs().hour() * 60 + dayjs().minute()) / 25 / 60) * 3600 + 34;
@@ -154,26 +166,24 @@ const sectionUpdaters = {
 } as const;
 
 // 開始時に実行
-onMounted(() => {
-    sectionUpdaters
-        .getTimetable(target_type.value, day.value)
-        .then((timetable) => {
-            if (timetable) {
-                timetables.value = timetable;
-                const scrollTo =
-                    ((dayjs().hour() * 60 + dayjs().minute()) / 25 / 60) *
-                        3600 +
-                    34;
-                nowTop.value = `${scrollTo}px`;
-                document.getElementById("timetable")?.scrollTo({
-                    left: 0,
-                    top: scrollTo - 100,
-                });
-            }
-        })
-        .finally(() => {
-            is_loading.value = false;
+onMounted(async () => {
+    await channelsStore.update();
+
+    const timetable = await sectionUpdaters.getTimetable(
+        target_type.value,
+        day.value
+    );
+    if (timetable) {
+        timetables.value = timetable;
+        const scrollTo =
+            ((dayjs().hour() * 60 + dayjs().minute()) / 25 / 60) * 3600 + 34;
+        nowTop.value = `${scrollTo}px`;
+        document.getElementById("timetable")?.scrollTo({
+            left: 0,
+            top: scrollTo - 100,
         });
+    }
+    is_loading.value = false;
 });
 </script>
 
@@ -254,6 +264,7 @@ onMounted(() => {
         background: rgb(var(--v-theme-background-lighten-2));
         text-align: center;
         height: 3600px;
+        z-index: 2
     }
 
     &__time-label {
