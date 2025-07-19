@@ -59,7 +59,8 @@
                         <div style="width: 10px"></div>
                         <div>
                             <v-btn
-                                v-for="(_, i) in dayOfWeek"
+                                v-for="(d, i) in dayOfWeek"
+                                v-bind:key="d"
                                 variant="flat"
                                 @click="updateDay(dayjs().add(i, 'day').day())"
                                 :color="
@@ -82,12 +83,13 @@
                             v-show="nowTop !== '-1px'"
                         ></div>
                         <div class="timetable__time-bar">
-                            <div v-for="h in 25" class="timetable__time-label">
+                            <div v-for="h in 25" class="timetable__time-label" v-bind:key="h">
                                 {{ h - 1 }}
                             </div>
                         </div>
                         <div
                             v-for="(timetable, i) in timetables"
+                            v-bind:key="timetable.channel.id"
                             style="width: 150px; flex-shrink: 0; height: 3600px"
                         >
                             <Channel
@@ -106,6 +108,7 @@
 
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
+import { mapStores } from "pinia";
 
 import Breadcrumbs from "@/components/Breadcrumbs.vue";
 import HeaderBar from "@/components/HeaderBar.vue";
@@ -113,6 +116,7 @@ import Navigation from "@/components/Navigation.vue";
 import SPHeaderBar from "@/components/SPHeaderBar.vue";
 import Timetable, { ITimetableData } from "@/services/Timetable";
 import { ChannelType } from "@/services/Channels";
+import useChannelsStore from "@/stores/ChannelsStore";
 import Channel from "@/components/Timetable/Channel.vue";
 import Program from "@/components/Timetable/Program.vue";
 import dayjs from "dayjs";
@@ -181,7 +185,7 @@ onMounted(() => {
     min-width: 0; // very important!!! これがないと要素がはみ出す
     height: 100vh;
     @include smartphone-vertical {
-       height: calc(100vh - 65px);
+        height: calc(100vh - 65px);
     }
 }
 

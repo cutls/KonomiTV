@@ -4,6 +4,7 @@
             <div
                 v-for="program in programs"
                 class="timetable__program"
+                v-bind:key="program.id"
                 :style="
                     getCss(
                         program.width_on_timetable,
@@ -22,7 +23,7 @@
                     <p class="timetable__program__description">
                         {{ program.description || "--" }}
                     </p>
-                    <p class="timetable__program__description"  v-for="key in Object.keys(program.detail)">
+                    <p class="timetable__program__description"  v-for="key in Object.keys(program.detail)"  v-bind:key="key">
                         <span  class="timetable__program__detail-title">{{ key }}</span>{{ program.detail[key] }}
                     </p>
                 </div>
@@ -31,8 +32,8 @@
     </div>
 </template>
 <script lang="ts" setup>
-import { ITimetableProgram } from "@/services/Timetable";
-import { dayjs } from "@/utils";
+import { ITimetableProgram } from '@/services/Timetable';
+import { dayjs } from '@/utils';
 
 // Props の定義
 const props = defineProps<{

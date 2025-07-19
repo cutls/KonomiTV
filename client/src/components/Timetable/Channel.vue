@@ -13,7 +13,7 @@
 </template>
 
 <script lang="ts" setup>
-import Utils from "@/utils";
+import Utils from '@/utils';
 
 // Props の定義
 defineProps({

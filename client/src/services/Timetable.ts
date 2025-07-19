@@ -1,10 +1,9 @@
-import APIClient from "@/services/APIClient";
+import APIClient from '@/services/APIClient';
 import Channels, {
     ChannelType,
-    IChannel,
     ILiveChannel,
-} from "@/services/Channels";
-import { IProgram } from "@/services/Programs";
+} from '@/services/Channels';
+import { IProgram } from '@/services/Programs';
 
 interface IDateRange {
     start_day_of_week: number;
@@ -98,14 +97,14 @@ class Timetable {
             is_exclude_date_ranges: true,
         };
         const response = await APIClient.post<{ programs: IProgram[] }>(
-            "/programs/search",
+            '/programs/search',
             query
         );
 
-        if (response.type === "error") {
+        if (response.type === 'error') {
             APIClient.showGenericError(
                 response,
-                "番組一覧を取得できませんでした。"
+                '番組一覧を取得できませんでした。'
             );
             return null;
         }

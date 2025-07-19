@@ -59,11 +59,10 @@
 import { mapStores } from 'pinia';
 import { defineComponent } from 'vue';
 
+import { IChannel } from '@/services/Channels';
+import { ITimetableProgram } from '@/services/Timetable';
 import useChannelsStore from '@/stores/ChannelsStore';
 import Utils, { ChannelUtils, ProgramUtils } from '@/utils';
-import { ITimetableProgram } from '@/services/Timetable';
-import { IChannel } from '@/services/Channels';
-import { channel } from 'diagnostics_channel';
 const props = defineProps<{
     channel: IChannel;
     program: ITimetableProgram;
