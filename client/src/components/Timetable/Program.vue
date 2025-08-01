@@ -18,12 +18,42 @@
                     <div class="timetable__program__start-min">
                         {{ dayjs(program.start_time).format("mm") }}
                     </div>
+                    <div
+                        class="timetable__program__reserved"
+                        v-if="
+                            reservations.find(
+                                (r) => r.program.id === program.id
+                            )
+                        "
+                    >
+                        予
+                    </div>
                 </div>
                 <div class="timetable__program__data">
-                    <p class="timetable__program__title" v-html="ProgramUtils.decorateProgramInfo(program, 'title')" />
-                    <p class="timetable__program__description" v-html="ProgramUtils.decorateProgramInfo(program, 'description')" /> 
-                    <p class="timetable__program__description"  v-for="key in Object.keys(program.detail)"  v-bind:key="key">
-                        <span class="timetable__program__detail-title">{{ key }}</span>{{ program.detail[key] }}
+                    <p
+                        class="timetable__program__title"
+                        v-html="
+                            ProgramUtils.decorateProgramInfo(program, 'title')
+                        "
+                    />
+                    <p
+                        class="timetable__program__description"
+                        v-html="
+                            ProgramUtils.decorateProgramInfo(
+                                program,
+                                'description'
+                            )
+                        "
+                    />
+                    <p
+                        class="timetable__program__description"
+                        v-for="key in Object.keys(program.detail)"
+                        v-bind:key="key"
+                    >
+                        <span class="timetable__program__detail-title">{{
+                            key
+                        }}</span
+                        >{{ program.detail[key] }}
                     </p>
                 </div>
             </div>
@@ -31,16 +61,22 @@
     </div>
 </template>
 <script lang="ts" setup>
-import { ITimetableProgram } from '@/services/Timetable';
-import { ProgramUtils } from '@/utils';
-import { dayjs } from '@/utils';
-import { inject, Ref } from 'vue';
+import { IReservation } from "@/services/Reservations";
+import { ITimetableProgram } from "@/services/Timetable";
+import { ProgramUtils } from "@/utils";
+import { dayjs } from "@/utils";
+import { inject, Ref } from "vue";
 
-const injected = inject<{ selectedProgram: Ref<null | ITimetableProgram>; updateSelectedProgram: (program: ITimetableProgram | null) => void }>('selectedProgram')
-const selectProgram = (program:  ITimetableProgram) => injected?.updateSelectedProgram(program)
+const injected = inject<{
+    selectedProgram: Ref<null | ITimetableProgram>;
+    updateSelectedProgram: (program: ITimetableProgram | null) => void;
+}>("selectedProgram");
+const selectProgram = (program: ITimetableProgram) =>
+    injected?.updateSelectedProgram(program);
 // Props の定義
 const props = defineProps<{
     programs: ITimetableProgram[];
+    reservations: IReservation[];
 }>();
 
 const getCss = (width: number, start: string, end: string) => {
@@ -76,7 +112,7 @@ const getCss = (width: number, start: string, end: string) => {
         overflow: hidden;
         display: flex;
         &__data {
-            padding-left: 2px;;
+            padding-left: 2px;
         }
         &__title {
             font-weight: bold;
@@ -85,17 +121,26 @@ const getCss = (width: number, start: string, end: string) => {
         }
         &__start-min {
             background-color: rgb(var(--v-theme-primary));
-            padding:2px;
+            padding: 2px;
             border-radius: 4px;
+            text-align: center;
+        }
+        &__reserved {
+            background-color: rgb(var(--v-theme-success));
+            margin-top: 5px;
+            padding: 2px;
+            border-radius: 4px;
+            text-align: center;
         }
         &__description {
             font-size: 0.7rem;
             margin-top: 5px;
         }
         &__detail-title {
-           font-weight: bold;
+            font-weight: bold;
             color: rgb(var(--v-theme-text));
             border: 1px solid rgb(var(--v-theme-text));
+            margin-right: 2px;
         }
     }
 }

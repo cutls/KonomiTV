@@ -101,7 +101,10 @@
                                 :has_bar="i === 0"
                             />
                             <div style="height: 4px"></div>
-                            <Program :programs="timetable.programs" />
+                            <Program
+                                :programs="timetable.programs"
+                                :reservations="reservations"
+                            />
                         </div>
                     </div>
                 </div>
@@ -109,7 +112,12 @@
         </main>
     </div>
 
-    <Details :program="selectedProgram" :channel="selectedChannel" v-model:show="programDialog" />
+    <Details
+        :program="selectedProgram"
+        :channel="selectedChannel"
+        v-model:show="programDialog"
+        :reservations="reservations"
+    />
 </template>
 
 <script lang="ts" setup>
@@ -124,32 +132,21 @@ import Timetable, {
     ITimetableData,
     ITimetableProgram,
 } from "@/services/Timetable";
+import Reservations, { IReservation } from "@/services/Reservations";
 import { ChannelType, ILiveChannel } from "@/services/Channels";
 import useChannelsStore from "@/stores/ChannelsStore";
 import Channel from "@/components/Timetable/Channel.vue";
 import Program from "@/components/Timetable/Program.vue";
 import dayjs from "dayjs";
 import Details from "@/components/Timetable/Details.vue";
-import { channel } from "diagnostics_channel";
 
 const selectedProgram = ref<null | ITimetableProgram>(null);
 const selectedChannel = ref<null | ILiveChannel>(null);
 const programDialog = ref(false);
-provide<{
-    selectedProgram: Ref<null | ITimetableProgram>;
-    updateSelectedProgram: (program: ITimetableProgram | null) => void;
-}>("selectedProgram", {
-    selectedProgram,
-    updateSelectedProgram: (program: ITimetableProgram | null) => {
-        programDialog.value = !!program;
-        selectedProgram.value = program;
-        selectedChannel.value = channelsStore.channels_list[target_type.value].find(
-            (c) => c.id === program?.channel_id
-        ) || null;
-    },
-});
+
 const timetables = ref<ITimetableData[]>([]);
 const channelsStore = useChannelsStore();
+const reservations = ref<IReservation[]>([]);
 const is_loading = ref(true);
 const nowTop = ref("0px");
 const target_type = ref<ChannelType>("GR");
@@ -184,9 +181,39 @@ const updateDay = (targetDay: 0 | 1 | 2 | 3 | 4 | 5 | 6) => {
     fetchTimetable(target_type.value, targetDay);
 };
 
+const fetchReservations = async () => {
+    const res = await Reservations.fetchReservations();
+    if (res) {
+        reservations.value = res.reservations;
+    } else {
+        console.error("予約の取得に失敗しました");
+    }
+    return res ? res.reservations : [];
+};
+
 const sectionUpdaters = {
     getTimetable: fetchTimetable,
 } as const;
+
+provide<{
+    selectedProgram: Ref<null | ITimetableProgram>;
+    updateSelectedProgram: (program: ITimetableProgram | null) => void;
+}>("selectedProgram", {
+    selectedProgram,
+    updateSelectedProgram: (program: ITimetableProgram | null) => {
+        programDialog.value = !!program;
+        selectedProgram.value = program;
+        selectedChannel.value =
+            channelsStore.channels_list[target_type.value].find(
+                (c) => c.id === program?.channel_id
+            ) || null;
+    },
+});
+provide<{
+    fetchReservations: () => Promise<IReservation[]>;
+}>("fetchReservations", {
+    fetchReservations,
+});
 
 // 開始時に実行
 onMounted(async () => {
@@ -206,6 +233,7 @@ onMounted(async () => {
             top: scrollTo - 100,
         });
     }
+    await fetchReservations();
     is_loading.value = false;
 });
 </script>

@@ -5,17 +5,34 @@
         :model-value="show"
         @update:model-value="$emit('update:show', $event)"
     >
-        <v-card class="program-container" v-if="channel">
+        <v-card class="program-container" v-if="channel && program">
             <section class="program-broadcaster">
-                <img
-                    class="program-broadcaster__icon"
-                    :src="`${Utils.api_base_url}/channels/${channel.id}/logo`"
-                />
-                <div class="program-broadcaster__number">
-                    Ch: {{ channel.channel_number }}
+                <div class="program-broadcaster__info">
+                    <img
+                        class="program-broadcaster__info__icon"
+                        :src="`${Utils.api_base_url}/channels/${channel.id}/logo`"
+                    />
+                    <div class="program-broadcaster__info__number">
+                        Ch: {{ channel.channel_number }}
+                    </div>
+                    <div class="program-broadcaster__info__name">
+                        {{ channel.name }}
+                    </div>
                 </div>
-                <div class="program-broadcaster__name">
-                    {{ channel.name }}
+                <div>
+                    <v-btn
+                        :color="targetReservation ? 'primary' : 'text'"
+                        variant="tonal"
+                        :disabled="isFinished"
+                        @click="reserve(program.id, targetReservation?.id || null)"
+                    >
+                        <Icon
+                            icon="fluent:clock-20-regular"
+                            width="18px"
+                            height="18px"
+                        />
+                        {{ isFinished ? '終了済' : targetReservation ? "予約済" : "未予約" }}
+                    </v-btn>
                 </div>
             </section>
             <section class="program-info">
@@ -28,13 +45,15 @@
                 </div>
                 <div
                     class="program-info__description"
-                    v-html="ProgramUtils.decorateProgramInfo(program, 'description')"
+                    v-html="
+                        ProgramUtils.decorateProgramInfo(program, 'description')
+                    "
                 ></div>
                 <div class="program-info__genre-container">
                     <div
                         class="program-info__genre"
                         :key="genre_index"
-                        v-for="(genre, genre_index) in program?.genres ?? []"
+                        v-for="(genre, genre_index) in program.genres ?? []"
                     >
                         {{ genre.major }} / {{ genre.middle }}
                     </div>
@@ -44,7 +63,8 @@
                 <div
                     class="program-detail"
                     :key="detail_heading"
-                    v-for="(detail_text, detail_heading) in program?.detail ?? {}"
+                    v-for="(detail_text, detail_heading) in program.detail ??
+                    {}"
                 >
                     <h2 class="program-detail__heading">
                         {{ detail_heading }}
@@ -59,22 +79,56 @@
     </v-dialog>
 </template>
 <script lang="ts" setup>
-
 import { IChannel } from "@/services/Channels";
+import Reservations, { defaultRecordSettings, IReservation } from "@/services/Reservations";
 import { ITimetableProgram } from "@/services/Timetable";
 import useChannelsStore from "@/stores/ChannelsStore";
-import Utils, { ChannelUtils, ProgramUtils } from "@/utils";
+import Utils, { ChannelUtils, dayjs, ProgramUtils } from "@/utils";
+import { computed, inject, ref, watch } from "vue";
 
 const channelsStore = useChannelsStore();
 // Emits
 defineEmits<{
     (e: "update:show", value: boolean): void;
 }>();
-defineProps<{
+const props = defineProps<{
     channel: IChannel | null;
     program: ITimetableProgram | null;
     show: boolean;
+    reservations: IReservation[];
 }>();
+
+const targetReservation = ref<IReservation | null>(
+    props.reservations.find((r) => r.program.id === props.program?.id) || null
+);
+watch(() => props.program, (newValue) => {
+    targetReservation.value = props.reservations.find(
+        (r) => r.program.id === newValue?.id
+    ) || null;
+});
+const injected = inject<{
+    fetchReservations: () => Promise<IReservation[]>;
+}>("fetchReservations");
+const isFinished = computed(() => {
+    if (!props.program) return false;
+    return dayjs(props.program.end_time).isBefore(new Date());
+});
+
+const reserve = async (id: string, reserved_id: number | null) => {
+    const res = reserved_id === null
+        ? await Reservations.addReservation(id, defaultRecordSettings)
+        : await Reservations.deleteReservation(reserved_id);
+    if (res) {
+        const reservations = await injected?.fetchReservations();
+        targetReservation.value = reservations?.find(
+            (r) => r.program.id === props.program?.id
+        ) || null;
+        console.log("処理成功", res);
+    } else {
+        console.error("処理失敗");
+    }
+};
+
 </script>
 <style lang="scss" scoped>
 .program-container {
@@ -83,70 +137,74 @@ defineProps<{
 
     .program-broadcaster {
         display: flex;
-        align-items: center;
-        min-width: 0;
-        @include tablet-vertical {
+        justify-content: space-between;
+        &__info {
             display: flex;
-            margin-top: 20px;
-        }
-        @include smartphone-horizontal {
-            display: flex;
-            margin-top: 16px;
-        }
-        @include smartphone-vertical {
-            display: flex;
-            margin-top: 16px;
-        }
-
-        &__icon {
-            display: inline-block;
-            flex-shrink: 0;
-            width: 43px;
-            height: 24px;
-            border-radius: 3px;
-            background: linear-gradient(
-                150deg,
-                rgb(var(--v-theme-gray)),
-                rgb(var(--v-theme-background-lighten-2))
-            );
-            object-fit: cover;
-            user-select: none;
+            align-items: center;
+            min-width: 0;
             @include tablet-vertical {
-                width: 58px;
-                height: 32px;
+                display: flex;
+                margin-top: 20px;
             }
             @include smartphone-horizontal {
-                width: 42px;
-                height: 23.5px;
+                display: flex;
+                margin-top: 16px;
             }
             @include smartphone-vertical {
-                width: 58px;
-                height: 32px;
+                display: flex;
+                margin-top: 16px;
             }
-        }
 
-        &__number {
-            flex-shrink: 0;
-            margin-left: 12px;
-            font-size: 16.5px;
-            @include tablet-vertical {
-                margin-left: 16px;
-                font-size: 19px;
+            &__icon {
+                display: inline-block;
+                flex-shrink: 0;
+                width: 43px;
+                height: 24px;
+                border-radius: 3px;
+                background: linear-gradient(
+                    150deg,
+                    rgb(var(--v-theme-gray)),
+                    rgb(var(--v-theme-background-lighten-2))
+                );
+                object-fit: cover;
+                user-select: none;
+                @include tablet-vertical {
+                    width: 58px;
+                    height: 32px;
+                }
+                @include smartphone-horizontal {
+                    width: 42px;
+                    height: 23.5px;
+                }
+                @include smartphone-vertical {
+                    width: 58px;
+                    height: 32px;
+                }
             }
-        }
 
-        &__name {
-            margin-left: 5px;
-            font-size: 16.5px;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-            @include tablet-vertical {
-                margin-left: 8px;
-                font-size: 19px;
+            &__number {
+                flex-shrink: 0;
+                margin-left: 12px;
+                font-size: 16.5px;
+                @include tablet-vertical {
+                    margin-left: 16px;
+                    font-size: 19px;
+                }
             }
-            @include smartphone-vertical {
-                font-size: 18px;
+
+            &__name {
+                margin-left: 5px;
+                font-size: 16.5px;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                @include tablet-vertical {
+                    margin-left: 8px;
+                    font-size: 19px;
+                }
+                @include smartphone-vertical {
+                    font-size: 18px;
+                }
             }
         }
     }

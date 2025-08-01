@@ -78,17 +78,7 @@ class Timetable {
         const date_ranges_filtered = date_range_init.filter(
             (d, i) => d.start_day_of_week !== day
         );
-        const today_range: IDateRange = {
-            start_day_of_week: day,
-            start_hour: 0,
-            start_minute: 0,
-            end_day_of_week: day,
-            end_hour: hour || 0,
-            end_minute: minute || 59,
-        };
-        const date_ranges = isToday
-            ? [...date_ranges_filtered, today_range]
-            : date_ranges_filtered;
+        const date_ranges = date_ranges_filtered;
         if (!channels) return null;
         const service_ranges = (channels ? channels[type] : []).map((c) => ({
             network_id: c.network_id,

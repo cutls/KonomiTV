@@ -25,6 +25,24 @@ export interface IRecordSettings {
     forced_tuner_id: number | null;
 }
 
+export const defaultRecordSettings: IRecordSettings = {
+    is_enabled: true,
+    priority: 2,
+    recording_folders: [],
+    recording_start_margin: null,
+    recording_end_margin: null,
+    recording_mode: 'AllServices',
+    caption_recording_mode: 'Default',
+    data_broadcasting_recording_mode: 'Default',
+    post_recording_mode: 'Default',
+    post_recording_bat_file_path: null,
+    is_event_relay_follow_enabled: true,
+    is_exact_recording_enabled: false,
+    is_oneseg_separate_output_enabled: false,
+    is_sequential_recording_in_single_file_enabled: false,
+    forced_tuner_id: null,
+};
+
 /**
  * 録画フォルダの設定
  */
